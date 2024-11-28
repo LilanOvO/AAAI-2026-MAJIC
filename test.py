@@ -68,6 +68,7 @@ def analyze_json_files(directory, keyword1="results", keyword2="gpt4o"):
 directory = "./results"  # 当前目录
 results = analyze_json_files(directory)
 
+
 print("Covered IDs in each file:")
 for filename, ids in results["file_covered_ids"].items():
     print(f"{filename}: {ids}")
