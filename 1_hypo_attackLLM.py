@@ -86,7 +86,7 @@ for item in tqdm(demo_item_list):
         # print("=====================================")
         disguised_prompt = attacker_response.strip().strip('\"')
         victim_messages = [
-            {"role": "user", "content": disguised_prompt + demos(disguised_prompt + harmful_response)},
+            {"role": "user", "content": disguised_prompt},
         ]
         victim_response = victim_pipe(victim_messages)[0]['generated_text'][1]['content']
         # jailbreak_score_1 = get_jailbreak_score(victim_pipe, harmful_prompt, disguised_prompt, victim_response, victim_tokenizer)
