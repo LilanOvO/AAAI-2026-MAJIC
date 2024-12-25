@@ -17,8 +17,10 @@ from m10_emoji_attack import emoji_method
 import random
 import numpy as np
 import pandas as pd
-os.environ["CUDA_VISIBLE_DEVICES"] = "5"
+os.environ["CUDA_VISIBLE_DEVICES"] = "7"
 from openai import OpenAI   
+
+
 
 def get_attacker_model_inference_pipeline(model_id = "meta-llama/Meta-Llama-3-8B-Instruct"):
     tokenizer = AutoTokenizer.from_pretrained(model_id)
