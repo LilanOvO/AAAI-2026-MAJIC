@@ -38,7 +38,7 @@ def get_prompts(file_name):
             data_list.append(item)
     return data_list
 
-def security_method(harmful_prompt,attacker_pipe,attacker_tokenizer,victim_pipe,victim_tokenizer,judgetype,attacktype,iter_num=10):
+def security_method(suffix,harmful_prompt,attacker_pipe,attacker_tokenizer,victim_pipe,victim_tokenizer,judgetype,attacktype,iter_num=10):
     best_score = -0.1
     best_disguised_prompt = "xxx"
     best_victim_response = "xxx"
@@ -79,27 +79,47 @@ def security_method(harmful_prompt,attacker_pipe,attacker_tokenizer,victim_pipe,
         # print("attacker_response: ", attacker_response)
         # print("=====================================")
         disguised_prompt = attacker_response.strip().strip('\"')
+        
+        if suffix != "none":
+            disguised_prompt = disguised_prompt + " " + suffix
+        
         victim_messages = [
             {"role": "user", "content": disguised_prompt},
         ]
         if attacktype == "local":
             victim_response = victim_pipe(victim_messages)[0]['generated_text'][1]['content']
-        else :    
-            API_SECRET_KEY= "sk-wvdsTSCg4Edw5do22c734f65145349A99b48Ed06202cD59a" # 填写我们给您的apikey
-            BASE_URL = "https://api.ai-gaochao.cn/v1"
-            gpt_client = OpenAI(api_key=API_SECRET_KEY, base_url=BASE_URL)
-            victim_messages = [
-            {"role": "system", "content": "You are a helpful AI assistant."},
-            {"role": "user", "content": disguised_prompt},
-            ]
-            try:
-                victim_response = gpt_client.chat.completions.create(model=attacktype, messages=victim_messages, max_tokens=512).choices[0].message.content
-            except Exception as e:
-                print(f"Error: {e}")
-                victim_response = "api error"
-            finally:
-                import time
-                time.sleep(2)
+        else : 
+            if attacktype[:3] == "gpt":  
+                API_SECRET_KEY= "sk-wvdsTSCg4Edw5do22c734f65145349A99b48Ed06202cD59a" # 填写我们给您的apikey
+                BASE_URL = "https://api.ai-gaochao.cn/v1"
+                gpt_client = OpenAI(api_key=API_SECRET_KEY, base_url=BASE_URL)
+                victim_messages = [
+                {"role": "system", "content": "You are a helpful AI assistant."},
+                {"role": "user", "content": disguised_prompt},
+                ]
+                try:
+                    victim_response = gpt_client.chat.completions.create(model=attacktype, messages=victim_messages, max_tokens=512).choices[0].message.content
+                except Exception as e:
+                    print(f"Error: {e}")
+                    victim_response = "api error"
+                finally:
+                    import time
+                    time.sleep(2)
+            else:
+                API_SECRET_KEY= "sk-wvdsTSCg4Edw5do22c734f65145349A99b48Ed06202cD59a" # 填写我们给您的apikey
+                BASE_URL = "https://api.ai-gaochao.cn/v1"
+                gpt_client = OpenAI(api_key=API_SECRET_KEY, base_url=BASE_URL)
+                victim_messages = [
+                {"role": "user", "content": disguised_prompt},
+                ]
+                try:
+                    victim_response = gpt_client.chat.completions.create(model=attacktype, messages=victim_messages, max_tokens=512).choices[0].message.content
+                except Exception as e:
+                    print(f"Error: {e}")
+                    victim_response = "api error"
+                finally:
+                    import time
+                    time.sleep(2)
         
         if judgetype == "gpt":
             jailbreak_score = judge_gpt(victim_pipe, harmful_prompt, disguised_prompt, victim_response, victim_tokenizer)

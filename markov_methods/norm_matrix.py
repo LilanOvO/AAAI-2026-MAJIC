@@ -98,7 +98,7 @@ def main():
         # 使用 Softmax 进行归一化
         # normalized_ratios = softmax_normalize(ratios)
         # normalized_ratios = power_normalize(ratios)
-        normalized_ratios = softmax_normalize_with_temperature(ratios,temperature=0.1)
+        normalized_ratios = softmax_normalize_with_temperature(ratios,temperature=0.15)
         # normalized_ratios = sum_normalize(ratios)
         all_normalized_ratios.append(normalized_ratios)
 
@@ -106,7 +106,7 @@ def main():
     matrix = np.array(all_normalized_ratios)
     # 格式化矩阵中每个数为三位小数
     matrix = np.round(matrix, decimals=3)
-    np.save("matrix_T_0.1.npy", matrix)
+    np.save("matrix_T_0.15.npy", matrix)
     print("矩阵已保存为 matrix.npy 文件")
 
     # 打印矩阵，保留三位小数

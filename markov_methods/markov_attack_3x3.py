@@ -2,10 +2,8 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 import torch
 import json
 from tqdm import tqdm
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 from judgeutils import get_jailbreak_score,judge_llama3,judge_gpt
+import os
 from m1_hypo_attackLLM import hypo_method
 from m2_history_attackLLM import history_method
 from m3_space_attackLLM import space_method
@@ -19,12 +17,10 @@ from m10_emoji_attack import emoji_method
 import random
 import numpy as np
 import pandas as pd
-<<<<<<< HEAD:markov_methods/markov_attack.py
-os.environ["CUDA_VISIBLE_DEVICES"] = "5"
-=======
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,2"
->>>>>>> f97e11f5a2303a4bbcd4064336261542ea702028:markov_methods/markov_attack_gw.py
+os.environ["CUDA_VISIBLE_DEVICES"] = "4"
 from openai import OpenAI   
+
+
 
 def get_attacker_model_inference_pipeline(model_id = "meta-llama/Meta-Llama-3-8B-Instruct"):
     tokenizer = AutoTokenizer.from_pretrained(model_id)
@@ -77,7 +73,7 @@ def select_init_method(init_num,harmful_prompt,attacker_pipe,attacker_tokenizer,
     else:
         raise ValueError(f"Unsupported init_num: {init_num}. Please provide a number between 1 and 10.")
     
-def select_optimize_method(failed_num,optimize_num,harmful_prompt,disguised_failed_sentence,attacker_pipe,attacker_tokenizer,victim_pipe,victim_tokenizer,judgetype,iter_num):
+def select_optimize_method(failed_num,optimize_num,harmful_prompt,disguised_failed_sentence,attacker_pipe,attacker_tokenizer,victim_pipe,victim_tokenizer,judgetype,attacktype,iter_num):
     best_score = -0.1
     best_disguised_prompt = "xxx"
     best_victim_response = "xxx"
@@ -99,7 +95,26 @@ def select_optimize_method(failed_num,optimize_num,harmful_prompt,disguised_fail
         victim_messages = [
             {"role": "user", "content": optimized_disguised_prompt},
         ]
-        victim_response = victim_pipe(victim_messages)[0]['generated_text'][1]['content']
+        
+        if attacktype == "local":
+            victim_response = victim_pipe(victim_messages)[0]['generated_text'][1]['content']
+        else :    
+            API_SECRET_KEY= "sk-wvdsTSCg4Edw5do22c734f65145349A99b48Ed06202cD59a" # 填写我们给您的apikey
+            BASE_URL = "https://api.ai-gaochao.cn/v1"
+            gpt_client = OpenAI(api_key=API_SECRET_KEY, base_url=BASE_URL)
+            victim_messages = [
+            {"role": "system", "content": "You are a helpful AI assistant."},
+            {"role": "user", "content": optimized_disguised_prompt},
+            ]
+            try:
+                victim_response = gpt_client.chat.completions.create(model=attacktype, messages=victim_messages, max_tokens=512).choices[0].message.content
+            except Exception as e:
+                print(f"Error: {e}")
+                victim_response = "api error"
+            finally:
+                import time
+                time.sleep(2)
+        
         if judgetype == "gpt":
             jailbreak_score = judge_gpt(victim_pipe, harmful_prompt, optimized_disguised_prompt, victim_response, victim_tokenizer)
         elif judgetype == "llama3":
@@ -133,71 +148,41 @@ def softmax_normalize_with_temperature(ratios, temperature=1.0): # 对列进行�
 if __name__ == '__main__':
     
     # 1.initialization
-    sum_query = 0
-    # demo_item_list = get_prompts("../data/harmful_behaviors_50.json")
-    demo_item_list = get_prompts("/data/home/Weiwei/code/jailbreak/results/llama3/markov_test_12-25.json")
+    demo_item_list = get_prompts("../data/harmful_behaviors_50.json")
+    # demo_item_list = get_prompts("/data/home/Weiwei/code/jailbreak/results/gpt-3.5-turbo/markov_test.json")
+    results_path = "../results/llama2/markov_test.json"
+    
+    # demo_item_list = get_prompts("/data/home/Weiwei/code/jailbreak/results/llama3/markov_test_12-25.json")
 
     attacker_model_id = "/hub/huggingface/models/jbmodels/mistral-7B-Instruct-v0.2"
     attacker_pipe = get_attacker_model_inference_pipeline(attacker_model_id)
     attacker_tokenizer = AutoTokenizer.from_pretrained(attacker_model_id)
 
-    victim_model_id = "/hub/huggingface/models/jbmodels/llama3-8b-it"
+    # victim_model_id = "/hub/huggingface/models/jbmodels/llama3-8b-it"
     # victim_model_id = "/hub/huggingface/models/jbmodels/gemma-2-9b-it"
-    # victim_model_id = "/hub/huggingface/models/jbmodels/Llama-2-7b-chat-hf"
+    victim_model_id = "/hub/huggingface/models/jbmodels/Llama-2-7b-chat-hf"
     victim_pipe = get_model_inference_pipeline(victim_model_id)
     victim_tokenizer = AutoTokenizer.from_pretrained(victim_model_id)
-<<<<<<< HEAD:markov_methods/markov_attack.py
 
     matrix = np.load("matrix_T_0.1.npy")
     print("matrix is: ", matrix)
     column_sums = np.sum(matrix, axis=0)
     init_vector = softmax_normalize_with_temperature(column_sums, temperature=1.0)
     print("init vector is ",init_vector)
-=======
-    
-    avg_jailbreak_score = 0.0
-    index = 1
-    
-    matrix = np.load("matrix_t.npy")
->>>>>>> f97e11f5a2303a4bbcd4064336261542ea702028:markov_methods/markov_attack_gw.py
     df = pd.read_csv('methods.csv')
     
-    results_path = "../results/llama3/markov_test_12-25.json"
     
     # testnum = 1
-    chain_length = 3
     chain_count = 3
+    init_qnum = 2
+    chain_qnum = 2
+    chain_length = 3
     index = 0
     # 2. attack
+    attack_type = "local"
+    # attack_type = "gpt-3.5-turbo-0613"
     for item in tqdm(demo_item_list):
-<<<<<<< HEAD:markov_methods/markov_attack.py
-        index += 1
-        if index < 19:
-=======
-        # testnum += 1
-        # if testnum > 10:
-        #     break
-        # 2.1初始化
-        chain_length = 2
-        chain_count = 2
-        harmful_prompt = item["goal"] # 获取goal字段的值
-        # init_vector = [0.2,0.05,0.05,0,0,0,0,0.5,0,0.2] # 暂时手动设置
-        init_vector = [0,0,0,0,0,0,0,1,0,0] # 暂时手动设置
-        init_num = generate_number_by_probability(init_vector) # 返回1~10的方法序号
-        print("init_num is: ", init_num)
-        init_score,init_disguised_prompt,init_victim_response = select_init_method(init_num,harmful_prompt,attacker_pipe,attacker_tokenizer,victim_pipe,victim_tokenizer,"gpt",iter_num=4)
-        print("init_score: ", init_score)
-        print("init_disguised_prompt: ", init_disguised_prompt)
-        print("init_victim_response: ", init_victim_response)
-        if init_score == 1.0:
-            item["best_score"] = init_score
-            item["best_disguised_prompt"] = init_disguised_prompt
-            item["best_victim_response"] = init_victim_response
-            item["type"] = "init"
-            avg_jailbreak_score += init_score
-            index = index + 1
->>>>>>> f97e11f5a2303a4bbcd4064336261542ea702028:markov_methods/markov_attack_gw.py
-            continue
+        item_query = 0
         chain_score = -0.1
         chain_disguised_prompt = "xxx"
         chain_victim_response = "xxx"
@@ -213,7 +198,8 @@ if __name__ == '__main__':
             # init_vector = [0,0,0,0,0,0,0,1,0,0] # 暂时手动设置
             init_num = generate_number_by_probability(init_vector) # 返回1~10的方法序号
             print("init_num is: ", init_num)
-            chain_score,chain_disguised_prompt,chain_victim_response = select_init_method(init_num,harmful_prompt,attacker_pipe,attacker_tokenizer,victim_pipe,victim_tokenizer,"gpt",iter_num=2)
+            item_query += init_qnum
+            chain_score,chain_disguised_prompt,chain_victim_response = select_init_method(init_num,harmful_prompt,attacker_pipe,attacker_tokenizer,victim_pipe,victim_tokenizer,"gpt",attack_type,iter_num=init_qnum)
             print("init_chain_score: ", chain_score)
             print("init_chain_disguised_prompt: ", chain_disguised_prompt)
             print("init_chain_victim_response: ", chain_victim_response)
@@ -236,19 +222,17 @@ if __name__ == '__main__':
                 print("optimize_vector is: ", optimize_vector)
                 optimize_num = generate_number_by_probability(optimize_vector)
                 print("optimize_num is: ", optimize_num)
-<<<<<<< HEAD:markov_methods/markov_attack.py
-                chain_score,chain_disguised_prompt,chain_victim_response = select_optimize_method(failed_num,optimize_num,harmful_prompt,failed_disguised_prompt,attacker_pipe,attacker_tokenizer,victim_pipe,victim_tokenizer,"gpt",iter_num=2)
+                item_query += chain_qnum
+                chain_score,chain_disguised_prompt,chain_victim_response = select_optimize_method(failed_num,optimize_num,harmful_prompt,failed_disguised_prompt,attacker_pipe,attacker_tokenizer,victim_pipe,victim_tokenizer,"gpt",attack_type,iter_num=chain_qnum)
+                print('='*40)
+                print("chain_score: ", chain_score)
+                print("chain_disguised_prompt: ", chain_disguised_prompt)
+                print("chain_victim_response: ", chain_victim_response)
+                print('='*40)
                 if chain_score == 1.0:
                     item["best_score"] = chain_score
                     item["best_disguised_prompt"] = chain_disguised_prompt
                     item["best_victim_response"] = chain_victim_response
-=======
-                optimize_score,optimize_disguised_prompt,optimize_victim_response = select_optimize_method(failed_num,optimize_num,harmful_prompt,failed_disguised_prompt,attacker_pipe,attacker_tokenizer,victim_pipe,victim_tokenizer,"gpt",iter_num=2)
-                if optimize_score == 1.0:
-                    item["best_score"] = optimize_score
-                    item["best_disguised_prompt"] = optimize_disguised_prompt
-                    item["best_victim_response"] = optimize_victim_response
->>>>>>> f97e11f5a2303a4bbcd4064336261542ea702028:markov_methods/markov_attack_gw.py
                     item["type"] = "markov"
                     break
                 else:
@@ -261,17 +245,10 @@ if __name__ == '__main__':
         item["best_score"] = chain_score
         item["best_disguised_prompt"] = chain_disguised_prompt
         item["best_victim_response"] = chain_victim_response
+        item["query_num"] = item_query
         # item["type"] = "markov"
         
-<<<<<<< HEAD:markov_methods/markov_attack.py
         # print("Average Jailbreak Score: ", avg_jailbreak_score)
         with open(results_path, 'w') as file:
             json.dump(demo_item_list, file, indent=4)     
-=======
-    # print("Average Jailbreak Score: ", avg_jailbreak_score)
-    outputfile_name = 'markov_test_literary_2.json'
-
-    with open(f"../results/{outputfile_name}", 'w') as file:
-        json.dump(demo_item_list, file, indent=4)     
->>>>>>> f97e11f5a2303a4bbcd4064336261542ea702028:markov_methods/markov_attack_gw.py
     

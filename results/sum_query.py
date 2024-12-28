@@ -1,8 +1,15 @@
 import json
 
 # 假设你的 JSON 文件名为 data.json
-file_name = '/data/home/Weiwei/code/jailbreak/results/llama3/markov_test.json' # 402/50 = 8.04 ; ASR = 0.88
-# file_name = '/data/home/Weiwei/code/jailbreak/results/gemma-2-9b/markov_test.json' # 330/50 = 6.6 ; ASR =0.54
+# file_name = '/data/home/Weiwei/code/jailbreak/results/llama3/markov_test.json' # 402/50 = 8.04 ; ASR = 0.88
+# file_name = '/data/home/Weiwei/code/jailbreak/results/gemma-2-9b/markov_test.json' # 602/50 = 12.04 ; ASR = 0.84
+# file_name = '/data/home/Weiwei/code/jailbreak/results/llama2/markov_test.json' # 752/50 = 15.00 ; ASR = 0.70
+# file_name = '/data/home/Weiwei/code/jailbreak/results/gpt-3.5-turbo/markov_8113_suffix_test.json' # 547/50 = 10.94 ; ASR = 0.98
+# file_name = '/data/home/Weiwei/code/jailbreak/results/llama3/markov_8113_suffix_test.json'# 554/50 = 11.08 ; ASR = 0.92
+# file_name = '/data/home/Weiwei/code/jailbreak/results/gpt-4o/markov_8113_suffix_test.json' # 637/50 = 12.74 ; ASR = 0.96
+# file_name = '/data/home/Weiwei/code/jailbreak/results/gemini-1.5-pro/markov_8113_suffix_test.json' # 653/50 = 13.06 ; ASR = 0.94
+file_name = '/data/home/Weiwei/code/jailbreak/results/qwen2.5-7B-it/markov_8113_suffix_test.json' # 563/50 = 11.26 ; ASR = 0.92
+
 
 try:
     # 读取 JSON 文件
