@@ -1,10 +1,10 @@
-# MAJIC: MArkov Jailbreak with Iterative Camouflage
+# MAJIC: Markovian Adaptive Jailbreaking via Iterative Composition of Diverse Innovative Strategies
 
 [![Paper](https://img.shields.io/badge/Paper-arXiv-red)](https://arxiv.org/abs/2508.13048)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Official implementation of **"MAJIC: MArkov Jailbreak with Iterative Camouflage"** (AAAI 2026).
+Official implementation of **"MAJIC: Markovian Adaptive Jailbreaking via Iterative Composition of Diverse Innovative Strategies"** (AAAI 2026).
 
 ## Overview
 
